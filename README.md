@@ -3,8 +3,20 @@
 ## Introduction
 
 ## To-do 
-1. [ ] Implement logistic regression
-2. [ ] Implement alternative classifier
+**1. Implement Logistic Regression:**
+   - [ ] Data Preprocessing:
+     - [ ] Split data into features and labels.
+   - [ ] Model Building:
+     - [ ] Implement the logistic regression model.
+   - [ ] Training:
+     - [ ] Implement the loss function.
+     - [ ] Set up the training loop.
+       - [ ] Perform weight updating during training.
+   - [ ] Inference:
+     - [ ] Implement the inference function for predictions.
+
+**2. Explore Alternative Classifiers:**
+   - [ ] Research and implement an alternative classification model.
 
 ## Ideias 
 - Apply Principal Component Analysis (PCA) to the features
