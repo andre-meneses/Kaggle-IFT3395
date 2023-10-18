@@ -20,6 +20,7 @@
 
 ## Ideias 
 - Apply Principal Component Analysis (PCA) to the features
+- k-fold training. 
 
 ## Git Commit Guideline
 
