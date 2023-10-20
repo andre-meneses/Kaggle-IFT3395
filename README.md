@@ -4,8 +4,8 @@
 
 ## To-do 
 **1. Implement Logistic Regression:**
-   - [ ] Data Preprocessing:
-     - [ ] Split data into features and labels.
+   - [x] Data Preprocessing:
+     - [x] Split data into features and labels.
    - [ ] Model Building:
      - [ ] Implement the logistic regression model.
    - [ ] Training:
