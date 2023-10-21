@@ -1,0 +1,9 @@
+https://www.cs.toronto.edu/~rgrosse/courses/csc421_2019/readings/L06%20Automatic%20Differentiation.pdf
+
+http://deeplearning.stanford.edu/tutorial/supervised/SoftmaxRegression/
+
+https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1
+
+https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative
+
+https://www.deeplearningbook.org/
