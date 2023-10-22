@@ -6,14 +6,14 @@
 **1. Implement Logistic Regression:**
    - [x] Data Preprocessing:
      - [x] Split data into features and labels.
-   - [ ] Model Building:
-     - [ ] Implement the logistic regression model.
-   - [ ] Training:
-     - [ ] Implement the loss function.
-     - [ ] Set up the training loop.
-       - [ ] Perform weight updating during training.
-   - [ ] Inference:
-     - [ ] Implement the inference function for predictions.
+   - [x] Model Building:
+     - [x] Implement the logistic regression model.
+   - [x] Training:
+     - [x] Implement the loss function.
+     - [x] Set up the training loop.
+       - [x] Perform weight updating during training.
+   - [x] Inference:
+     - [x] Implement the inference function for predictions.
 
 **2. Explore Alternative Classifiers:**
    - [ ] Research and implement an alternative classification model.
