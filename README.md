@@ -16,7 +16,7 @@
      - [ ] Implement the inference function for predictions.
 
 **2. Explore Alternative Classifiers:**
-   - [ ] Research and implement an alternative classification model.
+   - [x] Research and implement an alternative classification model.
 
 ## Ideias 
 - Apply Principal Component Analysis (PCA) to the features
