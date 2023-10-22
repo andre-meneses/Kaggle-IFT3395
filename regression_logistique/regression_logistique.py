@@ -30,6 +30,8 @@ class LogisticRegression:
         Returns:
             numpy.ndarray: Softmax probabilities.
         """
+        # print(self.weights.shape)
+        # print(x.shape)
         logits = np.exp(self.weights.T @ x)
         return logits / np.sum(logits)
 
@@ -63,20 +65,23 @@ class LogisticRegression:
         Returns:
             numpy.ndarray: The Jacobian matrix.
 
-        The Jacobian matrix is computed using vectorized operations.
         """
-        theta = self.weights
-        gradient = np.zeros(theta.shape)
+        gradient = np.zeros(self.weights.T.shape)
 
-        for x, y in zip(X, Y):
+        for x,y in zip(X.T, Y):
             S = self._softmax(x)
-            delta = np.array([self._delta(y, i) for i in range(theta.shape[0)])
-            gradient += np.outer(S - delta, x)
+
+            for i in range(gradient.shape[0]):
+                delta = self._delta(y,i)
+
+                for j in range(gradient.shape[1]):
+                    gradient[i,j] += (S[i] - delta)*x[j]
 
         # Regularization term
-        gradient += 2 * self.regularization_parameter * theta
+        gradient += 2 * self.regularization_parameter * self.weights.T
 
         return gradient
+
 
     def train(self, learning_rate=0.005, n_iter=1000, plot_loss=True):
         """
@@ -90,10 +95,10 @@ class LogisticRegression:
         loss = []
 
         for _ in range(n_iter):
-            self.weights -= learning_rate * self._jacobian(self.x, self.y)
+            self.weights -= learning_rate * self._jacobian(self.x, self.y).T
 
             if plot_loss:
-                loss.append(self._cross_entropy_loss(self._softmax(x)))
+                loss.append(self._cross_entropy_loss(self._softmax(self.x)))
 
         plt.plot(range(n_iter), loss)
 

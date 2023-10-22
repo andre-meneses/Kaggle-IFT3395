@@ -78,16 +78,16 @@ class Dataset:
         train = self.data[random_idx[:split_size]]
         validation = self.data[random_idx[split_size:]]
 
-        x_train = train[:, :-1]
-        x_val = validation[:, :-1]
+        x_train = train[:, :-1].T
+        x_val = validation[:, :-1].T
 
-        homogeneous_coordinate = np.ones(1, x_train.shape[1])
+        homogeneous_coordinate_train = np.ones((1, x_train.shape[1]))
+        homogeneous_coordinate_val = np.ones((1, x_val.shape[1]))
 
         y_train = train[:, -1].astype(int)
         y_val = validation[:, -1].astype(int)
 
-
-        return (np.vstack(x_train, homogeneous_coordinate), y_train), (np.vstack(x_val, homogeneous_coordinate), y_val)
+        return (np.vstack((x_train, homogeneous_coordinate_train)), y_train), (np.vstack((x_val, homogeneous_coordinate_val)), y_val)
 
 if __name__=='__main__':
 
