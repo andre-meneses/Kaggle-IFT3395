@@ -81,10 +81,13 @@ class Dataset:
         x_train = train[:, :-1]
         x_val = validation[:, :-1]
 
+        homogeneous_coordinate = np.ones(1, x_train.shape[1])
+
         y_train = train[:, -1].astype(int)
         y_val = validation[:, -1].astype(int)
 
-        return (x_train, y_train), (x_val, y_val)
+
+        return (np.vstack(x_train, homogeneous_coordinate), y_train), (np.vstack(x_val, homogeneous_coordinate), y_val)
 
 if __name__=='__main__':
 
