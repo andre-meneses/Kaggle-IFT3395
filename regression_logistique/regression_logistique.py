@@ -1,38 +1,112 @@
 import numpy as np
-import Dataset
+import matplotlib.pyplot as plt
 
 class LogisticRegression:
 
-    def __init__(self):
-        # Class constructor
+    def __init__(self, x_train, y_train, variance=1, regularization_parameter=5):
+        """
+        Class constructor.
 
-    def _cross_entropy_loss(self, y_prediction, y_labels):
-        loss = 0
+        Parameters:
+            x_train (numpy.ndarray): Input feature matrix.
+            y_train (numpy.ndarray): True class labels.
+            variance (float): Variance for weight initialization.
+        """
+        self.weights = self._initialize_weights(variance)
+        self.x = x_train
+        self.y = y_train
+        self.regularization_parameter = regularization_parameter
 
-        for y,yh in zip(y_prediction, y_labels):
-            loss += -yh*np.log(y)
+    def _cross_entropy_loss(self, probs):
+        return np.sum(-np.log(probs[self.y]))
 
-        return loss/y_prediction.shape[0]
+    def _softmax(self, x):
+        """
+        Compute the softmax function for the given input.
 
-    def _sigmoide(self):
+        Parameters:
+            x (numpy.ndarray): Input vector.
 
+        Returns:
+            numpy.ndarray: Softmax probabilities.
+        """
+        logits = np.exp(self.weights.T @ x)
+        return logits / np.sum(logits)
+
+    def _delta(self, i, j):
+        "Compute the kronecker delta for a given i and j"
+
+        return 1 if i == j else 0
 
     def _initialize_weights(self, variance):
-        # Initially, gaussian distribution with mean = 0
+        """
+        Initialize the model weights.
 
-    def train(self):
-        # Training loop
-        # Compute probabilities 
-        # Compute gradient
-        # Update weights
-        
-    def inference(self):
-        # 
+        Parameters:
+            dim (int): Dimension of the weight vector.
+            variance (float): Variance for weight initialization.
 
-    def _gradient(self):
-        # Compute loss function gradient
+        Returns:
+            numpy.ndarray: Initialized weight vector.
+        """
+        mean = 0
+        return np.random.normal(mean, np.sqrt(variance), (20,3))
 
-    def _update_weights(self, learning_rate=0.005):
-        # Update weights according to learning rate
+    def _jacobian(self, X, Y):
+        """
+        Compute the Jacobian matrix for a softmax regression model.
 
+        Parameters:
+            X (numpy.ndarray): Input feature matrix.
+            Y (numpy.ndarray): True class labels.
+
+        Returns:
+            numpy.ndarray: The Jacobian matrix.
+
+        The Jacobian matrix is computed using vectorized operations.
+        """
+        theta = self.weights
+        gradient = np.zeros(theta.shape)
+
+        for x, y in zip(X, Y):
+            S = self._softmax(x)
+            delta = np.array([self._delta(y, i) for i in range(theta.shape[0)])
+            gradient += np.outer(S - delta, x)
+
+        # Regularization term
+        gradient += 2 * self.regularization_parameter * theta
+
+        return gradient
+
+    def train(self, learning_rate=0.005, n_iter=1000, plot_loss=True):
+        """
+        Train the logistic regression model using gradient descent.
+
+        Parameters:
+            learning_rate (float): Learning rate for gradient descent.
+            n_iter (int): Number of iterations for training.
+        """
+
+        loss = []
+
+        for _ in range(n_iter):
+            self.weights -= learning_rate * self._jacobian(self.x, self.y)
+
+            if plot_loss:
+                loss.append(self._cross_entropy_loss(self._softmax(x)))
+
+        plt.plot(range(n_iter), loss)
+
+
+    def predict(self, x):
+        """
+        Predict the class label for the input.
+
+        Parameters:
+            x (numpy.ndarray): Input feature vector.
+
+        Returns:
+            int: Predicted class label.
+        """
+        return np.argmax(self.weights.T @ x)
 
