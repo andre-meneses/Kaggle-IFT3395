@@ -25,7 +25,7 @@ class Dataset:
         self.data = self._load_data(csv_path)
         self.n_classes = 3
         self.train, self.val = self._split_dataset(train_split, seed)
-        self.one_hot_labels = self._one_hot_encoding()
+        # self.one_hot_labels = self._one_hot_encoding()
 
     def _one_hot_encoding(self):
         """
@@ -56,6 +56,14 @@ class Dataset:
 
         return data
 
+    def prepare_inference(self):
+        x = self.data[:,:-1].T
+        # print(x.shape)
+        x = x / x.max(axis=0)
+        homogeneous_coordinate = np.ones((1, x.shape[1]))
+
+        return np.vstack((x, homogeneous_coordinate))
+
     def _split_dataset(self, train_split, seed):
         """
         Splits the dataset into training and validation sets.
@@ -78,8 +86,11 @@ class Dataset:
         train = self.data[random_idx[:split_size]]
         validation = self.data[random_idx[split_size:]]
 
-        x_train = train[:, :-1].T
-        x_val = validation[:, :-1].T
+        x_train = train[:, :-2].T
+        x_val = validation[:, :-2].T
+
+        x_train = x_train / x_train.max(axis=0)
+        x_val = x_val / x_val.max(axis=0)
 
         homogeneous_coordinate_train = np.ones((1, x_train.shape[1]))
         homogeneous_coordinate_val = np.ones((1, x_val.shape[1]))

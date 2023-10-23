@@ -30,10 +30,12 @@ class LogisticRegression:
         Returns:
             numpy.ndarray: Softmax probabilities.
         """
-        # print(self.weights.shape)
-        # print(x.shape)
+        # print(f"x: {x}")
+        # print(f"weights: {self.weights.T}")
+        # print(f"product: {self.weights.T @ x}")
         logits = np.exp(self.weights.T @ x)
         return logits / np.sum(logits)
+
 
     def _delta(self, i, j):
         "Compute the kronecker delta for a given i and j"
@@ -52,7 +54,7 @@ class LogisticRegression:
             numpy.ndarray: Initialized weight vector.
         """
         mean = 0
-        return np.random.normal(mean, np.sqrt(variance), (20,3))
+        return np.random.normal(mean, np.sqrt(variance), (19,3))
 
     def _jacobian(self, X, Y):
         """
@@ -80,10 +82,11 @@ class LogisticRegression:
         # Regularization term
         gradient += 2 * self.regularization_parameter * self.weights.T
 
+        # print(gradient)
         return gradient
 
 
-    def train(self, learning_rate=0.005, n_iter=1000, plot_loss=True):
+    def train(self, learning_rate=0.001, n_iter=10000, verbose=True):
         """
         Train the logistic regression model using gradient descent.
 
@@ -94,14 +97,11 @@ class LogisticRegression:
 
         loss = []
 
-        for _ in range(n_iter):
+        for i in range(n_iter):
             self.weights -= learning_rate * self._jacobian(self.x, self.y).T
 
-            if plot_loss:
-                loss.append(self._cross_entropy_loss(self._softmax(self.x)))
-
-        plt.plot(range(n_iter), loss)
-
+            if verbose:
+                print(f"Iteration n: {i}")
 
     def predict(self, x):
         """
@@ -113,5 +113,7 @@ class LogisticRegression:
         Returns:
             int: Predicted class label.
         """
+        # print(x)
+        # print(self.weights.T @ x)
         return np.argmax(self.weights.T @ x)
 
