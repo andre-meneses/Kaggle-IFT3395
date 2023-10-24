@@ -25,18 +25,10 @@ class Dataset:
         self.data = self._load_data(csv_path)
         self.n_classes = 3
         self.train, self.val = self._split_dataset(train_split, seed)
-        # self.one_hot_labels = self._one_hot_encoding()
 
-    def _one_hot_encoding(self):
-        """
-        One-hot encodes the labels for the training data.
-
-        Returns:
-            numpy.ndarray: A one-hot encoded array of shape (number of training samples, n_classes).
-        """
-        one_hot_labels = np.zeros((self.train[1].shape[0], self.n_classes))
-        one_hot_labels[np.arange(self.train[1].shape[0]), self.train[1]] = 1
-        return one_hot_labels
+    def _remove_duplicates(self, data):
+        # print(data.shape)
+        return np.unique(data, axis=0)
 
     def _load_data(self, csv_path):
         """
@@ -53,6 +45,8 @@ class Dataset:
 
         # Remove the first column (Sample Number)
         data = data[:, 1:]
+        data = self._remove_duplicates(data)
+        # print(data.shape)
 
         return data
 
@@ -105,7 +99,6 @@ if __name__=='__main__':
     filepath = "../data/train.csv"
     dataset = Dataset(filepath)
 
-    print(dataset.one_hot_labels)
 
     # print(dataset.val[0].shape)
     # print(dataset.val[1].shape)
