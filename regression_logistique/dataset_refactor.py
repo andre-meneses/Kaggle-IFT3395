@@ -7,9 +7,9 @@ class BaseDataset:
     """
 
     def __init__(self, csv_path):
+        self._load_data(csv_path)
         self.csv_path = csv_path
-        self.data = self._load_data(csv_path)
-        self.n_classes = 3  # Assuming this is known and fixed for all datasets
+        self.n_classes = 3  
 
     def _load_data(self, csv_path):
         df = pd.read_csv(csv_path)
@@ -18,7 +18,6 @@ class BaseDataset:
         df = self._transform_time_feature(df, last_column)
         self.data = df.to_numpy()[:,1:]
         self.normalized_data = self._normalize_features(df).to_numpy()[:,1:]
-        return self.normalized_data
 
     def _normalize_features(self, data):
         """
@@ -30,7 +29,7 @@ class BaseDataset:
         Returns:
         - The DataFrame with normalized features.
         """
-        label_column_name = 'Label'  # replace with your actual label column name
+        label_column_name = 'Label'  
         if label_column_name in data.columns:
             label_column = data[label_column_name]
             data = data.drop(label_column_name, axis=1)
@@ -107,7 +106,8 @@ class BaseDataset:
         df.drop('time', axis=1, inplace=True)
 
         # Reorder the columns to put 'Year', 'Month', 'Day' before the last column
-        df = df[[c for c in df if c not in ['Year', 'Month', 'Day', last_column]] + ['Year', 'Month', 'Day', last_column]]
+        if last_column=='Label':
+            df = df[[c for c in df if c not in ['Year', 'Month', 'Day', last_column]] + ['Year', 'Month', 'Day', last_column]]
 
         # Save the modified DataFrame to a CSV file
         df.to_csv('updated_file_teste.csv', index=False)
@@ -154,9 +154,43 @@ class TrainingDataset(BaseDataset):
 
         return (np.vstack((x_train, homogeneous_coordinate_train)), y_train), (np.vstack((x_val, homogeneous_coordinate_val)), y_val)
 
-    def balance_training_data(self):
-        # Implement the balancing logic
-        pass
+
+    def balance_training_data(self, percent_most_common=0.8, seed=None):
+        """
+        Downsample the most common class in the training data by a specified percentage.
+
+        Parameters:
+            percent_most_common (float): The percentage of the most common class instances to keep.
+            seed (int): Random seed for data shuffling.
+
+        Returns:
+            None (modifies the 'train' attribute in place).
+        """
+        if not 0 < percent_most_common <= 1:
+            raise ValueError("percent_most_common must be between 0 and 1.")
+
+        # Calculate the counts for each class and find the most common class
+        class_counts = np.bincount(self.train[1])
+        most_common_class = np.argmax(class_counts)
+
+        # Calculate the number of samples to keep for the most common class
+        samples_to_keep = int(class_counts[most_common_class] * percent_most_common)
+
+        # Get indices for the most common class
+        most_common_indices = np.where(self.train[1] == most_common_class)[0]
+        rng = np.random.default_rng(seed=seed)
+        chosen_indices = rng.choice(most_common_indices, size=samples_to_keep, replace=False)
+
+        # Get indices for the rest of the classes
+        other_indices = np.where(self.train[1] != most_common_class)[0]
+
+        # Combine indices and shuffle them
+        balanced_indices = np.concatenate((chosen_indices, other_indices))
+        balanced_indices = rng.permutation(balanced_indices)
+
+        # Apply the new balanced indices to the training data
+        self.train = (self.train[0][:, balanced_indices], self.train[1][balanced_indices])
+
 
     def create_batches(self, batch_size):
         """
@@ -200,7 +234,7 @@ class InferenceDataset(BaseDataset):
     def __init__(self, csv_path):
         super().__init__(csv_path)
 
-    def prepare_inference_data(self):
+    def prepare_inference(self):
         x = self.normalized_data.T
         homogeneous_coordinate = np.ones((1, x.shape[1]))
         return np.vstack((x, homogeneous_coordinate))
@@ -212,6 +246,7 @@ if __name__ == '__main__':
     # Example usage for training data
     training_filepath = "../data/train.csv"
     training_dataset = TrainingDataset(training_filepath)
+    print(training_dataset.data.shape)
 
     # Example usage for inference data
     # inference_filepath = "../data/test.csv"  # Assuming test.csv is the inference dataset without labels

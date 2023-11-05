@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 class LogisticRegression:
 
-    def __init__(self, x_train, y_train, variance=1, regularization_parameter=5):
+    def __init__(self, dataset, variance=1, regularization_parameter=5):
         """
         Class constructor.
 
@@ -12,9 +12,9 @@ class LogisticRegression:
             y_train (numpy.ndarray): True class labels.
             variance (float): Variance for weight initialization.
         """
+        self.weights_shape = (dataset.data.shape[1],3)
         self.weights = self._initialize_weights(variance)
-        self.x = x_train
-        self.y = y_train
+        self.dataset = dataset
         self.regularization_parameter = regularization_parameter
 
     def _cross_entropy_loss(self, probs):
@@ -33,6 +33,8 @@ class LogisticRegression:
         # print(f"x: {x}")
         # print(f"weights: {self.weights.T}")
         # print(f"product: {self.weights.T @ x}")
+        # print(x.shape)
+        # print(self.weights.T.shape)
         logits = np.exp(self.weights.T @ x)
         return logits / np.sum(logits)
 
@@ -54,7 +56,9 @@ class LogisticRegression:
             numpy.ndarray: Initialized weight vector.
         """
         mean = 0
-        return np.random.normal(mean, np.sqrt(variance), (19,3))
+        # return np.random.normal(mean, np.sqrt(2), self.weights_shape)
+        return np.random.uniform(0,1,self.weights_shape)
+        # return np.zeros(self.weights_shape)
 
     def _jacobian(self, X, Y):
         """
@@ -81,24 +85,27 @@ class LogisticRegression:
 
         # Regularization term
         gradient += 2 * self.regularization_parameter * self.weights.T
+        gradient *= np.array([0.8, 1.5, 1.1]).reshape(-1,1)
 
         # print(gradient)
         return gradient
 
-
-    def train(self, learning_rate=0.001, n_iter=10000, verbose=True):
+    def train(self, learning_rate=1e-6, n_iter=10000, verbose=True, batch_size=256):
         """
         Train the logistic regression model using gradient descent.
 
         Parameters:
+            dataset (Dataset): The dataset object containing training data.
             learning_rate (float): Learning rate for gradient descent.
             n_iter (int): Number of iterations for training.
         """
-
         loss = []
 
         for i in range(n_iter):
-            self.weights -= learning_rate * self._jacobian(self.x, self.y).T
+            batches = self.dataset.create_batches(batch_size)  # Create batches using the dataset object
+
+            for batch_features, batch_labels in batches:
+                self.weights -= learning_rate * self._jacobian(batch_features, batch_labels).T
 
             if verbose:
                 print(f"Iteration n: {i}")
@@ -115,5 +122,7 @@ class LogisticRegression:
         """
         # print(x)
         # print(self.weights.T @ x)
+        # print(x.shape)
+        # print(self.weights.T.shape)
         return np.argmax(self.weights.T @ x)
 
