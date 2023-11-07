@@ -85,7 +85,7 @@ class LogisticRegression:
 
         # Regularization term
         gradient += 2 * self.regularization_parameter * self.weights.T
-        gradient *= np.array([0.8, 1.5, 1.1]).reshape(-1,1)
+        # gradient *= np.array([0.8, 1.5, 1.1]).reshape(-1,1)
 
         # print(gradient)
         return gradient

@@ -18,7 +18,7 @@ def load_dataset(file_path, tipo=0):
 
 def train_logistic_regression(dataset, n_iter=1000, lr=1e-6):
     logist = regression_logistique.LogisticRegression(dataset)
-    logist.train(learning_rate=lr, n_iter=n_iter)
+    logist.train(learning_rate=lr, n_iter=n_iter, verbose=False)
     # print(logist.weights)
     return logist
 
@@ -86,8 +86,8 @@ def write_predictions_to_csv_and_print_class_distribution(data, logist, csv_file
 
 
 if __name__ == "__main__":
-    learning_rates = [0.05, 0.01, 0.001, 0.0001, 1e-5, 1e-6, 1e-7]
-    iterations = [1000, 5000, 10000, 50000, 100000]
+    learning_rates = [1e-5, 1e-6, 1e-7]
+    iterations = [1000, 5000, 10000]
     balance_percents = [1.0, 0.75, 0.5]
 
     best_accuracy = 0
@@ -113,6 +113,8 @@ if __name__ == "__main__":
 
                     # Write the current grid search results to the CSV file
                     writer.writerow([lr, n_iter, balance_percent, accuracy_percentage])
+
+                    print(f"Tested: LR={lr}, Iter={n_iter}, Balance={balance_percent}, Accuracy={accuracy_percentage:.2f}%")
 
                     # Update the best model if the current model has the highest accuracy so far
                     if accuracy_percentage > best_accuracy:
