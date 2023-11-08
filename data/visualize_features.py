@@ -22,8 +22,6 @@ sns.boxplot(data=df_minmax)
 plt.title('Min-Max Normalization')
 plt.show()
 
-# Log Normalization - assuming all values are positive
-# If you have zero or negative values, you need to shift the dataset before applying log
 min_value = df.min().min()
 # Calculate the shift needed to ensure all values are positive
 shift = abs(min_value) + 1 if min_value < 0 else 0
