@@ -117,9 +117,6 @@ class BaseDataset:
     def _remove_duplicates(self, data):
         return np.unique(data, axis=0)
 
-    # ... (any other common methods)
-
-
 class TrainingDataset(BaseDataset):
     """
     A subclass for handling training datasets, including data splitting and balancing.
@@ -223,8 +220,6 @@ class TrainingDataset(BaseDataset):
         return batches
 
 
-    # ... (any other training-specific methods)
-
 
 class InferenceDataset(BaseDataset):
     """
@@ -238,9 +233,6 @@ class InferenceDataset(BaseDataset):
         x = self.normalized_data.T
         homogeneous_coordinate = np.ones((1, x.shape[1]))
         return np.vstack((x, homogeneous_coordinate))
-
-    # ... (any other inference-specific methods)
-
 
 if __name__ == '__main__':
     # Example usage for training data
