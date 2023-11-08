@@ -1,33 +1,161 @@
 import numpy as np
 import pandas as pd
 
-class Dataset:
+class BaseDataset:
     """
-    A class for handling datasets, with loading, splitting, and encoding functionalities.
+    A base class for handling datasets, with loading and encoding functionalities.
+    """
+
+    def __init__(self, csv_path):
+        self._load_data(csv_path)
+        self.csv_path = csv_path
+        self.n_classes = 3  
+
+    def _load_data(self, csv_path):
+        df = pd.read_csv(csv_path)
+        last_column = df.columns[-1]
+        df = self._transform_geographical_features(df)
+        df = self._transform_time_feature(df, last_column)
+        self.data = df.to_numpy()[:,1:]
+        self.normalized_data = self._normalize_features(df).to_numpy()[:,1:]
+
+    def _normalize_features(self, data):
+        """
+        Normalize the specified features with min-max scaling and the rest with z-score normalization.
+
+        Parameters:
+        - data: A pandas DataFrame containing the dataset.
+
+        Returns:
+        - The DataFrame with normalized features.
+        """
+        label_column_name = 'Label'  
+        if label_column_name in data.columns:
+            label_column = data[label_column_name]
+            data = data.drop(label_column_name, axis=1)
+        else:
+            label_column = None
+
+        # Separate columns for different normalization
+        min_max_columns = ['Year', 'Month', 'Day', 'location_combined']
+        z_score_columns = [col for col in data.columns if col not in min_max_columns]
+
+        # Apply Min-Max normalization to specified columns
+        for col in min_max_columns:
+            if col in data.columns:
+                col_data = data[col].values.astype(float)
+                min_val = np.min(col_data)
+                max_val = np.max(col_data)
+                # Avoid division by zero
+                range_val = max_val - min_val if max_val != min_val else 1
+                data[col] = (col_data - min_val) / range_val
+
+        # Apply Z-Score normalization to the rest
+        for col in z_score_columns:
+            col_data = data[col].values.astype(float)
+            mean = np.mean(col_data)
+            std = np.std(col_data)
+            # Avoid division by zero
+            std = std if std != 0 else 1
+            data[col] = (col_data - mean) / std
+
+        # If label_column is present, concatenate it back to the dataframe
+        if label_column is not None:
+            data = pd.concat([data, label_column], axis=1)
+
+        self._save_normalized_data_to_csv(data)
+
+        return data
+
+        
+    def _save_normalized_data_to_csv(self,data):
+        data.to_csv('normalized_data.csv', index=False)
+
+    def _transform_geographical_features(self, df, num_bins_lat=10, num_bins_lon=10):
+        # Implement the geographical feature transformation logic
+        df['lat_bin'] = pd.cut(df['lat'], bins=num_bins_lat, labels=range(num_bins_lat))
+        df['lon_bin'] = pd.cut(df['lon'], bins=num_bins_lon, labels=range(num_bins_lon))
+
+        df['lat_bin'] = df['lat_bin'].astype(int)
+        df['lon_bin'] = df['lon_bin'].astype(int)
+
+        # Combine the binned values into a single numeric feature
+        df['location_combined'] = df['lat_bin'] * num_bins_lon + df['lon_bin']
+
+        df.drop('lat', axis=1, inplace=True)
+        df.drop('lat_bin', axis=1, inplace=True)
+        df.drop('lon', axis=1, inplace=True)
+        df.drop('lon_bin', axis=1, inplace=True)
+
+        return df
+
+    def _transform_time_feature(self, df, last_column):
+        # Implement the time feature transformation logic
+        df['time'] = df['time'].astype(str)
+
+        # Extract year, month, and day into separate columns
+        df['Year'] = df['time'].str[:4].astype(int)
+        df['Month'] = df['time'].str[4:6].astype(int)
+        df['Day'] = df['time'].str[6:].astype(int)
+
+        # Adjust the year column to start from 0
+        min_year = df['Year'].min()
+        df['Year'] = df['Year'] - min_year
+
+        # Drop the 'time' column
+        df.drop('time', axis=1, inplace=True)
+
+        # Reorder the columns to put 'Year', 'Month', 'Day' before the last column
+        if last_column=='Label':
+            df = df[[c for c in df if c not in ['Year', 'Month', 'Day', last_column]] + ['Year', 'Month', 'Day', last_column]]
+
+        # Save the modified DataFrame to a CSV file
+        df.to_csv('updated_file_teste.csv', index=False)
+
+        return df
+
+    def _remove_duplicates(self, data):
+        return np.unique(data, axis=0)
+
+    # ... (any other common methods)
+
+
+class TrainingDataset(BaseDataset):
+    """
+    A subclass for handling training datasets, including data splitting and balancing.
     """
 
     def __init__(self, csv_path, train_split=0.8, seed=None):
-        """
-        Initializes the Dataset object.
+        super().__init__(csv_path)
+        self.train_split = train_split
+        self.seed = seed
+        self.train, self.val = self._split_dataset()
 
-        Args:
-            csv_path (str): The file path to the CSV file containing the dataset.
-            train_split (float): The proportion of data to be used for training (default is 0.8).
-            seed (int): Random seed for data shuffling (default is None).
+    def _split_dataset(self):
+        data = self._remove_duplicates(self.normalized_data)
 
-        Attributes:
-            data (numpy.ndarray): The loaded dataset.
-            n_classes (int): Number of classes in the dataset.
-            train (tuple): A tuple containing the training data (features, labels).
-            val (tuple): A tuple containing the validation data (features, labels).
-            one_hot_labels (numpy.ndarray): One-hot encoded labels for training data.
-        """
-        self.data = self._load_data(csv_path)
-        self.n_classes = 3
-        self.train, self.val = self._split_dataset(train_split, seed)
+        size = data.shape[0]
+        split_size = int(self.train_split * size)
+
+        rng = np.random.default_rng(seed=self.seed)
+        random_idx = rng.permutation(size)
+
+        train = data[random_idx[:split_size]]
+        validation = data[random_idx[split_size:]]
+
+        x_train = train[:, :-1].T
+        x_val = validation[:, :-1].T
+
+        homogeneous_coordinate_train = np.ones((1, x_train.shape[1]))
+        homogeneous_coordinate_val = np.ones((1, x_val.shape[1]))
+
+        y_train = train[:, -1].astype(int)
+        y_val = validation[:, -1].astype(int)
+
+        return (np.vstack((x_train, homogeneous_coordinate_train)), y_train), (np.vstack((x_val, homogeneous_coordinate_val)), y_val)
 
 
-    def balance_training_data(self, percent_most_common=0.7, seed=None):
+    def balance_training_data(self, percent_most_common=0.8, seed=None):
         """
         Downsample the most common class in the training data by a specified percentage.
 
@@ -38,6 +166,9 @@ class Dataset:
         Returns:
             None (modifies the 'train' attribute in place).
         """
+        if not 0 < percent_most_common <= 1:
+            raise ValueError("percent_most_common must be between 0 and 1.")
+
         # Calculate the counts for each class and find the most common class
         class_counts = np.bincount(self.train[1])
         most_common_class = np.argmax(class_counts)
@@ -60,93 +191,6 @@ class Dataset:
         # Apply the new balanced indices to the training data
         self.train = (self.train[0][:, balanced_indices], self.train[1][balanced_indices])
 
-
-    def _remove_duplicates(self, data):
-        # print(data.shape)
-        return np.unique(data, axis=0)
-
-    def bin_and_combine_lat_lon(self,data, num_bins_lat, num_bins_lon):
-        """
-        Bin latitude and longitude data and combine into a single feature.
-
-        Parameters:
-        - data: A pandas DataFrame with 'latitude' and 'longitude' columns.
-        - num_bins_lat: The number of bins for latitude.
-        - num_bins_lon: The number of bins for longitude.
-
-        Returns:
-        - A pandas DataFrame with original data and additional columns for binned and combined features.
-        """
-        # Create bins for latitude and longitude
-        data['lat_bin'] = pd.cut(data['lat'], bins=num_bins_lat, labels=range(num_bins_lat))
-        data['lon_bin'] = pd.cut(data['lon'], bins=num_bins_lon, labels=range(num_bins_lon))
-
-        data['lat_bin'] = data['lat_bin'].astype(int)
-        data['lon_bin'] = data['lon_bin'].astype(int)
-
-        # Combine the binned values into a single numeric feature
-        data['location_combined'] = data['lat_bin'] * num_bins_lon + data['lon_bin']
-
-        data.drop('lat', axis=1, inplace=True)
-        data.drop('lon', axis=1, inplace=True)
-
-        return data
-
-    def _load_data(self, csv_path):
-        """
-        Loads the dataset from a CSV file and removes the first column (Sample Number).
-
-        Args:
-            csv_path (str): The file path to the CSV file.
-
-        Returns:
-            numpy.ndarray: The loaded dataset as a NumPy array.
-        """
-        df = pd.read_csv(csv_path)
-        last_column = df.columns[-1]
-
-        df = self.bin_and_combine_lat_lon(df,10,10)
-
-        # Convert 'time' to string to ensure proper slicing
-        df['time'] = df['time'].astype(str)
-
-        # Extract year, month, and day into separate columns
-        df['Year'] = df['time'].str[:4].astype(int)
-        df['Month'] = df['time'].str[4:6].astype(int)
-        df['Day'] = df['time'].str[6:].astype(int)
-
-        # Adjust the year column to start from 0
-        min_year = df['Year'].min()
-        df['Year'] = df['Year'] - min_year
-
-        # Drop the 'time' column
-        df.drop('time', axis=1, inplace=True)
-
-        # print(last_column)
-
-        # Reorder the columns to put 'Year', 'Month', 'Day' before the last column
-        df = df[[c for c in df if c not in ['Year', 'Month', 'Day', last_column]] + ['Year', 'Month', 'Day', last_column]]
-
-        # Save the modified DataFrame to a CSV file
-        df.to_csv('updated_file_teste.csv', index=False)
-
-        data = df.to_numpy()
-
-        # Remove the first column (Sample Number)
-        data = data[:, 1:]
-        # data = self._remove_duplicates(data)
-        # print(data.shape)
-
-        return data
-
-    def prepare_inference(self):
-        x = self.data[:,:-1].T
-        # print(x.shape)
-        # x = x / x.max(axis=0)
-        x = np.log(x+1+abs(np.min(x)))
-        homogeneous_coordinate = np.ones((1, x.shape[1]))
-
-        return np.vstack((x, homogeneous_coordinate))
 
     def create_batches(self, batch_size):
         """
@@ -178,53 +222,33 @@ class Dataset:
 
         return batches
 
-    def _split_dataset(self, train_split, seed):
-        """
-        Splits the dataset into training and validation sets.
 
-        Args:
-            train_split (float): The proportion of data to be used for training.
-            seed (int): Random seed for data shuffling.
+    # ... (any other training-specific methods)
 
-        Returns:
-            tuple: A tuple containing training and validation data as follows:
-                (x_train, y_train): Features and labels for training.
-                (x_val, y_val): Features and labels for validation.
-        """
 
-        data = self.data
-        data = self._remove_duplicates(data)
+class InferenceDataset(BaseDataset):
+    """
+    A subclass for handling inference datasets.
+    """
 
-        size = data.shape[0]
-        split_size = int(train_split * size)
+    def __init__(self, csv_path):
+        super().__init__(csv_path)
 
-        rng = np.random.default_rng(seed=seed)
-        random_idx = rng.permutation(size)
+    def prepare_inference(self):
+        x = self.normalized_data.T
+        homogeneous_coordinate = np.ones((1, x.shape[1]))
+        return np.vstack((x, homogeneous_coordinate))
 
-        train = data[random_idx[:split_size]]
-        validation = data[random_idx[split_size:]]
+    # ... (any other inference-specific methods)
 
-        # x_train = train[:, :-1].T
-        # x_val = validation[:, :-1].T
-        x_train=train.T
-        x_val=validation.T
 
-        homogeneous_coordinate_train = np.ones((1, x_train.shape[1]))
-        homogeneous_coordinate_val = np.ones((1, x_val.shape[1]))
+if __name__ == '__main__':
+    # Example usage for training data
+    training_filepath = "../data/train.csv"
+    training_dataset = TrainingDataset(training_filepath)
+    print(training_dataset.data.shape)
 
-        y_train = train[:, -1].astype(int)
-        y_val = validation[:, -1].astype(int)
-
-        return (np.vstack((x_train, homogeneous_coordinate_train)), y_train), (np.vstack((x_val, homogeneous_coordinate_val)), y_val)
-        
-
-if __name__=='__main__':
-
-    filepath = "../data/train.csv"
-    dataset = Dataset(filepath)
-
-    # print(dataset.val[0].shape)
-    # print(dataset.val[1].shape)
-    # print(dataset.shape)
-    # print(dataset.x)
-    # print(dataset.y)
+    # Example usage for inference data
+    # inference_filepath = "../data/test.csv"  # Assuming test.csv is the inference dataset without labels
+    # inference_dataset = InferenceDataset(inference_filepath)
+    # inference_data = inference_dataset.prepare_inference_data()
