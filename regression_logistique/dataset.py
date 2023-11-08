@@ -63,7 +63,7 @@ class BaseDataset:
         if label_column is not None:
             data = pd.concat([data, label_column], axis=1)
 
-        self._save_normalized_data_to_csv(data)
+        self._save_normalized_data_to_csv(data[:,1:])
 
         return data
 
