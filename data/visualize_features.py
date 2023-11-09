@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from scipy.stats import zscore
 
-# Load your dataset
 df = pd.read_csv('train.csv')
 
 # Visualizing the range of features with no normalization
@@ -29,7 +28,6 @@ shift = abs(min_value) + 1 if min_value < 0 else 0
 df_shifted = df + shift
 # Apply log normalization
 df_log = np.log(df_shifted)
-# Now you can visualize it
 plt.figure(figsize=(12, 6))
 sns.boxplot(data=df_log)
 plt.title('Log Normalization with Shift')
