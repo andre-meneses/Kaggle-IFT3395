@@ -1,4 +1,4 @@
-import dataset_refactor as dt
+import dataset as dt
 import regression_logistique
 import numpy as np
 import csv
@@ -6,10 +6,10 @@ import sys
 
 np.set_printoptions(threshold=sys.maxsize)
 
-def load_dataset(file_path, tipo=0):
+def load_dataset(file_path, tipo=0, balance=1.0):
     if tipo == 0:
         dataset = dt.TrainingDataset(file_path)
-        dataset.balance_training_data(1.0)
+        dataset.balance_training_data(balance)
     else:
         dataset = dt.InferenceDataset(file_path)
 
@@ -85,7 +85,7 @@ def write_predictions_to_csv_and_print_class_distribution(data, logist, csv_file
         print(f"Class {class_label}: {count} samples")
 
 if __name__ == "__main__":
-    train_data = load_dataset('../data/train.csv')
+    train_data = load_dataset('../data/train.csv', balance=0.75)
     logistic_model = train_logistic_regression(train_data, n_iter=10000, lr=1e-6)
 
     inference = load_dataset('../data/test.csv', tipo=1)
@@ -96,8 +96,7 @@ if __name__ == "__main__":
     print(f"Accuracy: {accuracy_percentage:.2f}%")
     print_class_distribution(train_data.train[1])
 
-    # write_predictions_to_csv(inference_data.data.T, logistic_model, "predictions.csv")
-    write_predictions_to_csv_and_print_class_distribution(inference_data, logistic_model, "predictions.csv")
+    write_predictions_to_csv_and_print_class_distribution(inference_data, logistic_model, "predictions_mock.csv")
 
 
 

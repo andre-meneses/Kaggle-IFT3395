@@ -1,4 +1,5 @@
 import numpy as np
+from statistics import mean
 import matplotlib.pyplot as plt
 
 class LogisticRegression:
@@ -17,8 +18,8 @@ class LogisticRegression:
         self.dataset = dataset
         self.regularization_parameter = regularization_parameter
 
-    def _cross_entropy_loss(self, probs):
-        return np.sum(-np.log(probs[self.y]))
+    def _cross_entropy_loss(self, probs, labels):
+        return np.sum(-np.log(probs[labels]))
 
     def _softmax(self, x):
         """
@@ -99,16 +100,28 @@ class LogisticRegression:
             learning_rate (float): Learning rate for gradient descent.
             n_iter (int): Number of iterations for training.
         """
-        loss = []
+        history_loss = []
 
         for i in range(n_iter):
             batches = self.dataset.create_batches(batch_size)  # Create batches using the dataset object
 
+            loss = []
+
             for batch_features, batch_labels in batches:
+                loss.append(self._cross_entropy_loss(self._softmax(batch_features), batch_labels))
                 self.weights -= learning_rate * self._jacobian(batch_features, batch_labels).T
+
+            history_loss.append(mean(loss))
 
             if verbose:
                 print(f"Iteration n: {i}")
+
+
+        plt.title("Perte Moyenne x Nombre d'Iterations")
+        plt.ylabel("Perte moyenne par batch")
+        plt.xlabel("Nombre d'Iterations")
+        plt.plot(range(n_iter), history_loss)
+        plt.show()
 
     def predict(self, x):
         """
