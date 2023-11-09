@@ -219,8 +219,6 @@ class TrainingDataset(BaseDataset):
 
         return batches
 
-
-
 class InferenceDataset(BaseDataset):
     """
     A subclass for handling inference datasets.
@@ -235,12 +233,7 @@ class InferenceDataset(BaseDataset):
         return np.vstack((x, homogeneous_coordinate))
 
 if __name__ == '__main__':
-    # Example usage for training data
     training_filepath = "../data/train.csv"
     training_dataset = TrainingDataset(training_filepath)
     print(training_dataset.data.shape)
 
-    # Example usage for inference data
-    # inference_filepath = "../data/test.csv"  # Assuming test.csv is the inference dataset without labels
-    # inference_dataset = InferenceDataset(inference_filepath)
-    # inference_data = inference_dataset.prepare_inference_data()
