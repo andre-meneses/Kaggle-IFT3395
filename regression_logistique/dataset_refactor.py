@@ -63,13 +63,13 @@ class BaseDataset:
         if label_column is not None:
             data = pd.concat([data, label_column], axis=1)
 
-        self._save_normalized_data_to_csv(data)
+        self._save_normalized_data_to_csv(data[:, 1:])
 
         return data
 
         
     def _save_normalized_data_to_csv(self,data):
-        data.to_csv('normalized_data.csv', index=False)
+        data.to_csv('normalizedd_data.csv', index=False)
 
     def _transform_geographical_features(self, df, num_bins_lat=10, num_bins_lon=10):
         # Implement the geographical feature transformation logic
@@ -110,7 +110,7 @@ class BaseDataset:
             df = df[[c for c in df if c not in ['Year', 'Month', 'Day', last_column]] + ['Year', 'Month', 'Day', last_column]]
 
         # Save the modified DataFrame to a CSV file
-        df.to_csv('updated_file_teste.csv', index=False)
+        df.to_csv('updatedd_file_teste.csv', index=False)
 
         return df
 
@@ -244,7 +244,8 @@ class InferenceDataset(BaseDataset):
 
 if __name__ == '__main__':
     # Example usage for training data
-    training_filepath = "../data/train.csv"
+    #training_filepath = "../data/train.csv"
+    training_filepath = r"/Users/lfarias/Downloads/Kaggle-IFT3395/data/train.csv"
     training_dataset = TrainingDataset(training_filepath)
     print(training_dataset.data.shape)
 
